@@ -22,7 +22,7 @@
 <body>
 
 <!-- GAME SCREEN -->
-<div class="game-screen">
+<div class="game-screen" style="display:none;">
   <div class="game-title" style="color: #000;">🔐 Human Verification</div>
   <div class="game-instructions" style="color: #000; font-weight: 700;">Press SPACE or click/tap to jump</div>
 
@@ -86,297 +86,40 @@
 </div>
 
 <script>
-  // Check if game is already completed
-  let hasCompletedGame = localStorage.getItem('beeryanisGameCompleted') === 'true';
-
   document.addEventListener("DOMContentLoaded", () => {
-    // Hide website if game not completed
-    if (!hasCompletedGame) {
-      document.querySelector("header").style.display = "none";
-      document.querySelector("main").style.display = "none";
-      document.querySelector("footer").style.display = "none";
-      
-      // Show game screen and start game
-      const canvas = document.getElementById("gameCanvas");
-      const ctx = canvas.getContext("2d");
+    const gameScreen = document.querySelector(".game-screen");
+    if (gameScreen) {
+      gameScreen.style.display = "none";
+    }
+    document.querySelector("header").style.display = "block";
+    document.querySelector("main").style.display = "block";
+    document.querySelector("footer").style.display = "block";
 
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+    const logo = document.querySelector(".logo");
+    const modal = document.querySelector(".logo-modal");
+    if (logo && modal) {
+      const modalImg = document.querySelector(".logo-modal-img");
+      const closeBtn = document.querySelector(".logo-modal-close");
 
-      const note = {
-        x: 80,
-        y: canvas.height - 116,
-        width: 24,
-        height: 56,
-        velocity: 0,
-        jump: -11,
-        grounded: true
-      };
+      logo.addEventListener("click", function() {
+        modalImg.src = this.src;
+        modal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+      });
 
-      const gravity = 0.7;
-      const minObstacleGap = 320;
-      let obstacles = [];
-      let points = [];
-      let score = 0;
-      let gameOver = false;
-      const targetScore = 5;
+      closeBtn.addEventListener("click", function() {
+        modal.style.display = "none";
+        document.body.style.overflow = "auto";
+      });
 
-      function canSpawnObstacle() {
-        return obstacles.length === 0 || canvas.width - obstacles[obstacles.length - 1].x > minObstacleGap;
-      }
-
-      function jump() {
-        if (note.grounded && !gameOver) {
-          note.velocity = note.jump;
-          note.grounded = false;
-        }
-      }
-
-      document.addEventListener("keydown", e => {
-        if (e.code === "Space") {
-          e.preventDefault();
-          jump();
-        }
-        if (e.key === "r" && gameOver) {
-          location.reload();
+      modal.addEventListener("click", function(e) {
+        if (e.target === modal) {
+          modal.style.display = "none";
+          document.body.style.overflow = "auto";
         }
       });
 
-      function handleInput() {
-        if (gameOver) {
-          location.reload();
-        } else {
-          jump();
-        }
-      }
-
-      document.addEventListener("pointerdown", handleInput);
-      document.addEventListener("touchstart", handleInput);
-
-      function drawNote() {
-        const cx = note.x + note.width / 2;
-        const headY = note.y + 12;
-
-        ctx.strokeStyle = "#f4f4f4";
-        ctx.lineWidth = 5;
-        ctx.lineCap = "round";
-
-        // Head
-        ctx.beginPath();
-        ctx.arc(cx, headY, 8, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Body
-        ctx.beginPath();
-        ctx.moveTo(cx, headY + 8);
-        ctx.lineTo(cx, headY + 30);
-        ctx.stroke();
-
-        // Arms
-        ctx.beginPath();
-        ctx.moveTo(cx, headY + 16);
-        ctx.lineTo(cx - 12, headY + 26);
-        ctx.moveTo(cx, headY + 16);
-        ctx.lineTo(cx + 16, headY + 22);
-        ctx.stroke();
-
-        // Legs
-        ctx.beginPath();
-        ctx.moveTo(cx, headY + 30);
-        ctx.lineTo(cx - 10, headY + 44);
-        ctx.moveTo(cx, headY + 30);
-        ctx.lineTo(cx + 10, headY + 48);
-        ctx.stroke();
-
-        // Guitar body
-        ctx.fillStyle = "#f4f4f4";
-        ctx.beginPath();
-        ctx.ellipse(cx + 20, headY + 22, 8, 14, -0.4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillRect(cx + 20, headY + 14, 4, 14);
-      }
-
-      function drawOb(o) {
-        ctx.fillStyle = "#f5f5f5";
-        ctx.fillRect(o.x, o.y, o.width, o.height);
-        ctx.fillStyle = "#ccd8e4";
-        ctx.fillRect(o.x + 6, o.y + 6, o.width - 12, o.height - 12);
-      }
-
-      function drawPt(p) {
-        ctx.fillStyle = "#2d9d4d";
-        ctx.beginPath();
-        ctx.arc(p.x + 8, p.y + 8, 8, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      function collision(a, b) {
-        return a.x < b.x + b.width &&
-               a.x + a.width > b.x &&
-               a.y < b.y + b.height &&
-               a.y + a.height > b.y;
-      }
-
-      let bgOffset = 0;
-
-      function loop() {
-        // Animated background and city silhouette
-        ctx.fillStyle = "rgba(10, 14, 30, 0.96)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        const bgColors = ["rgba(200, 230, 255, 0.35)", "rgba(220, 240, 200, 0.28)", "rgba(255, 230, 180, 0.24)"];
-        for (let i = 0; i < 5; i++) {
-          const x = canvas.width - ((bgOffset + i * 420) % (canvas.width + 1200));
-          const y = 80 + (i % 2) * 50;
-          const radius = 60 + (i * 10);
-          ctx.fillStyle = bgColors[i % bgColors.length];
-          ctx.beginPath();
-          ctx.arc(x, y, radius, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        const skylineBase = canvas.height - 60;
-        let skylineX = -((bgOffset * 0.25) % 180);
-        const buildingHeights = [68, 50, 84, 62, 94, 46, 88, 52, 100, 56, 72, 60];
-        for (let i = 0; i < buildingHeights.length; i++) {
-          const width = 42 + (i % 3) * 10;
-          const height = buildingHeights[i];
-          ctx.fillStyle = "rgba(18, 24, 44, 0.95)";
-          ctx.fillRect(skylineX, skylineBase - height, width, height);
-          ctx.fillStyle = "rgba(28, 38, 68, 0.9)";
-          ctx.fillRect(skylineX + 6, skylineBase - height + 16, 10, 12);
-          ctx.fillRect(skylineX + 24, skylineBase - height + 24, 8, 10);
-          skylineX += width + 18;
-        }
-
-        bgOffset = (bgOffset + 0.35) % (canvas.width + 1200);
-
-        // ground plane
-        ctx.fillStyle = "rgba(25, 34, 56, 0.95)";
-        ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
-        ctx.fillStyle = "rgba(255, 255, 255, 0.15)";
-        ctx.fillRect(0, canvas.height - 62, canvas.width, 4);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(0, canvas.height - 30);
-        ctx.lineTo(canvas.width, canvas.height - 30);
-        ctx.stroke();
-
-        // gravity
-        note.velocity += gravity;
-        note.y += note.velocity;
-
-        if (note.y <= 40) {
-          note.y = 40;
-          note.velocity = 0;
-        }
-
-        if (note.y >= canvas.height - 60 - note.height) {
-          note.y = canvas.height - 60 - note.height;
-          note.velocity = 0;
-          note.grounded = true;
-        }
-
-        // spawn
-        if (Math.random() < 0.01 && canSpawnObstacle()) {
-          obstacles.push({ x: canvas.width, y: canvas.height - 60 - 44, width: 44, height: 44 });
-        }
-
-        if (Math.random() < 0.015) {
-          points.push({ x: canvas.width, y: canvas.height - 120, width: 16, height: 16 });
-        }
-
-        // update obstacles
-        obstacles = obstacles.filter(o => {
-          o.x -= 4;
-          return o.x > 0;
-        });
-        
-        points = points.filter(p => {
-          p.x -= 4;
-          return p.x > 0;
-        });
-
-        // draw
-        drawNote();
-        obstacles.forEach(drawOb);
-        points.forEach(drawPt);
-
-        // collisions
-        obstacles.forEach(o => {
-          if (collision(note, o)) gameOver = true;
-        });
-
-        points.forEach((p, i) => {
-          if (collision(note, p)) {
-            score++;
-            points.splice(i, 1);
-            document.getElementById("score-text").innerText = score;
-            
-            // Update score dots
-            const dots = document.querySelectorAll(".score-point");
-            dots.forEach((dot, index) => {
-              if (index < score) {
-                dot.style.background = "#ff8c42";
-              }
-            });
-          }
-        });
-
-        if (score >= targetScore) {
-          // Game won - unlock site
-          localStorage.setItem("beeryanisGameCompleted", "true");
-          document.querySelector(".game-screen").style.display = "none";
-          document.querySelector("header").style.display = "block";
-          document.querySelector("main").style.display = "block";
-          document.querySelector("footer").style.display = "block";
-          return;
-        }
-
-        if (!gameOver) {
-          requestAnimationFrame(loop);
-        }
-      }
-
-      loop();
-    } else {
-      // Game already completed - hide game screen and show website
-      document.querySelector(".game-screen").style.display = "none";
-      document.querySelector("header").style.display = "block";
-      document.querySelector("main").style.display = "block";
-      document.querySelector("footer").style.display = "block";
-    }
-
-    // Logo modal (always available after game)
-    if (hasCompletedGame) {
-      const logo = document.querySelector(".logo");
-      const modal = document.querySelector(".logo-modal");
-      
-      if (logo && modal) {
-        const modalImg = document.querySelector(".logo-modal-img");
-        const closeBtn = document.querySelector(".logo-modal-close");
-        
-        logo.addEventListener("click", function() {
-          modalImg.src = this.src;
-          modal.style.display = "flex";
-          document.body.style.overflow = "hidden";
-        });
-        
-        closeBtn.addEventListener("click", function() {
-          modal.style.display = "none";
-          document.body.style.overflow = "auto";
-        });
-        
-        modal.addEventListener("click", function(e) {
-          if (e.target === modal) {
-            modal.style.display = "none";
-            document.body.style.overflow = "auto";
-          }
-        });
-        
-        logo.style.cursor = "pointer";
-      }
+      logo.style.cursor = "pointer";
     }
   });
 </script>
