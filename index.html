@@ -124,8 +124,10 @@
   </script>
   
   <script>
-    // Game Logic - Always play on every visit
-    document.addEventListener('DOMContentLoaded', function() {
+    // Game Logic - Only show on first visit to website
+    let hasCompletedGame = localStorage.getItem('beeryanisGameCompleted') === 'true';
+    
+    if (!hasCompletedGame) {
       const canvas = document.getElementById('gameCanvas');
       const ctx = canvas.getContext('2d');
       
@@ -240,6 +242,7 @@
       }
 
       function unlockSite() {
+        localStorage.setItem('beeryanisGameCompleted', 'true');
         const gameScreen = document.querySelector('.game-screen');
         gameScreen.classList.add('hidden');
         gameActive = false;
@@ -381,8 +384,7 @@
 
       gameLoop();
     });
-    
-    document.addEventListener('DOMContentLoaded', function() {
+    }
       const logo = document.querySelector('.logo');
       const modal = document.querySelector('.logo-modal');
       const modalImg = document.querySelector('.logo-modal-img');
@@ -444,8 +446,11 @@
 
 <header>
   <div class="header-container">
-    <img src="logo.png" alt="Company Logo" class="logo">
-    <h1>Beeryanis</h1>
+    <img src="logo.png" alt="Beeryanis Logo" class="logo">
+    <div class="header-text">
+      <h1>Beeryanis Band Official Website</h1>
+      <p class="band-subtitle">The Beeryanis</p>
+    </div>
   </div>
   
   <nav>
