@@ -23,7 +23,7 @@
 
 <!-- GAME SCREEN -->
 <div class="game-screen">
-  <div class="game-title">🔐 Human Verification</div>
+  <div class="game-title" style="color: #000;">🔐 Human Verification</div>
   <div class="game-instructions">Press SPACE or click/tap to jump</div>
 
   <div class="game-container">
@@ -130,7 +130,14 @@
         }
       });
 
-      document.addEventListener("touchstart", jump);
+      document.addEventListener("touchstart", () => {
+        if (gameOver) {
+          // Restart game on tap when failed
+          location.reload();
+        } else {
+          jump();
+        }
+      });
 
       function drawNote() {
         ctx.fillStyle = "#ff8c42";
@@ -177,7 +184,7 @@
         }
 
         // spawn
-        if (Math.random() < 0.02) {
+        if (Math.random() < 0.01) {
           obstacles.push({ x: canvas.width, y: canvas.height - 60 });
         }
 
