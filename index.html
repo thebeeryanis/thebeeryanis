@@ -126,7 +126,7 @@
       }
 
       function jump() {
-        if (!gameOver && note.y >= canvas.height - 60 - note.height - 2) {
+        if (note.grounded && !gameOver) {
           note.velocity = note.jump;
           note.grounded = false;
         }
@@ -142,14 +142,16 @@
         }
       });
 
-      document.addEventListener("pointerdown", () => {
+      function handleInput() {
         if (gameOver) {
-          // Restart game on click or tap when failed
           location.reload();
         } else {
           jump();
         }
-      });
+      }
+
+      document.addEventListener("pointerdown", handleInput);
+      document.addEventListener("touchstart", handleInput);
 
       function drawNote() {
         const cx = note.x + note.width / 2;
